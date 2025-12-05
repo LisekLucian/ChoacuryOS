@@ -3,7 +3,7 @@
 #include "../../terminal.h"
 #include "../../../drivers/vga.h"
 #include "../../../drivers/vbe.h"
-#include "../../../gui/desktop.h"
+// really?? #include "../../../gui/desktop.h"
 
 typedef int (*math_op_t)(int, int);
 int add(int a, int b);

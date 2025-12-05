@@ -3,7 +3,7 @@
 #include "../../shell.h"
 #include "../../../drivers/vga.h"
 #include "../../../drivers/vbe.h"
-#include "../../../gui/desktop.h"
+#include "../../terminal.h"
 
 int shell_cd_command(int argc, const char** argv) {
     if (argc != 2) {
@@ -30,7 +30,7 @@ int shell_cd_command(int argc, const char** argv) {
                 strcpy(currentDir, "root");  // If somehow beyond root, reset to root
             }
         }
-        return;
+        return 0;
     }
 
     if (strcmp(currentDir, "root") != 0) {

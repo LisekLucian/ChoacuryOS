@@ -4,6 +4,7 @@
 #include "../../../drivers/vga.h"
 #include "../../../drivers/vbe.h"
 #include "../../../memory/pmm.h"
+#include "../../shell.h"
 
 int shell_chstat_command(int argc, const char** argv) {
    	/* this is basically a stupid neofetch clone */
@@ -18,7 +19,7 @@ int shell_chstat_command(int argc, const char** argv) {
     term_write("BUILD: ", TC_LBLUE);
     term_write(__DATE__ " @ " __TIME__ "\n", TC_WHITE);
     term_write("KERNEL: ", TC_LBLUE);
-    term_write("Choacury Standard\n", TC_WHITE);            // <-- aka. stock kernel.
+    term_write("Choacury Lime\n", TC_WHITE);            // <-- aka. stock kernel.
     term_write("SHELL: ", TC_LBLUE);
     term_write("chsh-0.0.0.0041e-dev\n", TC_WHITE);         // <-- Could be more automated ngl.
     term_write("RAM: ", TC_LBLUE);
@@ -30,6 +31,11 @@ int shell_chstat_command(int argc, const char** argv) {
     term_write("CPU Brand: ", TC_LBLUE);
     term_write(cpu_brand[0] ? cpu_brand : "Unknown", TC_WHITE); // <-- Show "Unknown" as fallback if the
                                                                 // CPU brand can't be fetched
+    term_write("\n", TC_WHITE);
+
+	term_write("\xB0\xB1\xB2\xDB", TC_LIME);
+	term_write("\xDB\xB2\xB1\xB0", TC_LIME);
+
     term_write("\n", TC_WHITE);
 
 	/* TODO: If the user enters GUI mode, fetch the users D.E., display size, WM, etc. */

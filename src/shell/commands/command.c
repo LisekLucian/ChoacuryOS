@@ -2,7 +2,7 @@
 
 // Command includes
 #include "help/help.c"
-#include "guiload/guiload.h"
+//#include "guiload/guiload.h"
 #include "clear/clear.h"
 #include "beep/beep.h"
 #include "calc/calc.h"
@@ -16,16 +16,13 @@
 #include "ls/ls.h"
 #include "vbetest/vbetest.h"
 #include "whereami/whereami.h"
-#include "recovery/recovery.h"
+
 
 // Temp
 int example_command(int argc, const char** argv) {
 
 }
 
-int temp_shell_guiload_command(int argc, char** argv) {
-    return 0;
-}
 
 int temp_shell_notimplemented_command(int argc, const char** argv) {
     return 0;
@@ -34,7 +31,6 @@ int temp_shell_notimplemented_command(int argc, const char** argv) {
 void shell_init_commands_list() {
     /*static Command shell_commands_list[] = {
         //{"example", "arg1 arg2", "Example command", example_command},
-        {"guiload", "No args.", "Loads up the GUI (WIP!)", shell_guiload_command}
     };*/
 }
 
@@ -57,14 +53,12 @@ Command shell_commands_list[] = {
     {"compdate", {NULL},        "No args.", "Shows the compilation date.",                                      shell_compdate_command},  
     {"clear",    {"cls", NULL}, "No args.", "Clears the screen.",                                               shell_clear_command},
     {"echo",     {NULL},        "No args.", "Prints string to the console.",                                    shell_echo_command},  
-    {"guiload",  {NULL},        "No args.", "Loads up the GUI (WIP!)",                                          shell_guiload_command},
     {"ls",       {NULL},        "(str:directory)", "List files in a directory.",                                shell_ls_command},  
     // {"mkdir",    {NULL},        "(str:directory)", "Creates a empty directory.",                                shell_mkdir_command}, // <-- TODO
     {"pause",    {NULL},        "(-t int:time) (-k)", "Pauses the terminal until a keyboard input.",            shell_pause_command},  
     {"pl",       {NULL},        "No args.", "Shows the connected data devices.",                                shell_pl_command},  
     {"chstat",   {NULL},        "No args.", "Display system information.",                                      shell_chstat_command},  
     {"vbetest",  {NULL},        "No args.", "Test Bochs VBE extensions",                                        shell_vbetest_command},  
-    {"whereami", {NULL},        "No args.", "Prints the current directory",                                     shell_whereami_command},
-    {"recovery", {NULL},        "No args.", "Recovery mode (WIP)",                                              shell_recovery_command}
+    {"whereami", {NULL},        "No args.", "Prints the current directory",                                     shell_whereami_command}
 };
 int shell_commands_count = sizeof(shell_commands_list) / sizeof(Command);

@@ -40,9 +40,7 @@ void StartUp_Beeps() {
     mutebeep();
 }
 
-/* A Simple kernel written in C
- * These parameters are pushed onto the stack by the assembly kernel entry file.
- */
+
 
 void k_main(multiboot_info_t* mbd, uint32_t magic) {
     gdt_init();
@@ -51,21 +49,20 @@ void k_main(multiboot_info_t* mbd, uint32_t magic) {
 
     vga_text_init(TC_BLACK);
 
-    u32 term_width = VGA_width;               // Set this to the width of your VGA text mode
-    u32 visible_height = VGA_height;          // Set this to the height of your VGA text mode (visible height)
-    u32 buffer_height = visible_height + 100; // Set this to a height larger than visible to allow scrolling
+    u32 term_width = VGA_width;
+    u32 visible_height = VGA_height;
+    u32 buffer_height = visible_height + 100;
 
     term_init(term_width, buffer_height, visible_height, vga_set_char, vga_move_cursor);
 
     term_write("\n\xB0\xB1\xB2\xDB Welcome to Choacury! \xDB\xB2\xB1\xB0\n", TC_LIME);
-    term_write("Version: Build " __DATE__ " (GUI Testing)\n", TC_WHITE);
+    term_write("Version: Build " __DATE__ " (Limine Testing)\n", TC_WHITE);
     term_write("(C)opyright: \2 Pineconium 2023-2025.\n\n", TC_WHITE);
 
     if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-        panic("Bootloader did not provide multiboot information\n");
+        panic("Bootloader did not provide multiboot information\n"); // ;3
     }
 
-    // For the stuff on lines 30-31
     for (size_t i = 0; &__init_array[i] != __init_array_end; i++)
     {
         __init_array[i]();
@@ -80,7 +77,7 @@ void k_main(multiboot_info_t* mbd, uint32_t magic) {
     ps2_init();
     ps2_init_keymap_us();
 
-    // StartUp_Beeps();
+    StartUp_Beeps(); // Yes, the code blows up without this. (not really)
 
     storage_device_init();
     debug_print_pci();
