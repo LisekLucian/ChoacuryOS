@@ -12,7 +12,7 @@ int shell_cat_command(int argc, const char** argv) {
     }
     if (s_fat_fs == NULL) {
         term_write("ERROR: Not FAT filesystem initialized\n", TC_LRED);
-        return;
+        return 0;
     }
 
     char dest[256];
@@ -25,7 +25,7 @@ int shell_cat_command(int argc, const char** argv) {
         term_write(argv[1], TC_LRED);
         term_write("'\n", TC_LRED);
         FAT_Close(file);
-        return;
+        return 0;
     }
 
     char buffer[513];

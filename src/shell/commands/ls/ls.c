@@ -5,6 +5,7 @@
 #include "../../../drivers/vga.h"
 #include "../../../drivers/vbe.h"
 #include "../../../drivers/filesystem/fat.h"
+#include "../../../memory/kmalloc.h"
 
 int shell_ls_command(int argc, const char** argv) {
     if (argc > 2) {

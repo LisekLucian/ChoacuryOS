@@ -1,44 +1,57 @@
-bits 32        ;nasm directive
+BITS 32
 
-section .multiboot
-    ;multiboot spec
-    align 4
-    dd 0x1BADB002                ;magic
-    dd 0x00                      ;flags
-    dd - (0x1BADB002 + 0x00)     ;checksum. m+f+c should be zero
+section .multiboot_header
+align 4
+global multiboot_header
 
-section .bss
-    boot_stack_bottom:
-        resb 4096
-    boot_stack_top:
-
-section .data
-    boot_gdt:
-        dq 0x0000000000000000
-        dq 0x00CF9A000000FFFF
-        dq 0x00CF92000000FFFF
-    boot_gdtr:
-        dw boot_gdtr - boot_gdt - 1
-        dd boot_gdt
+multiboot_header:
+    dd 0x1BADB002
+    dd 0x00000000
+    dd -(0x1BADB002 + 0x00000000)
 
 section .text
-
 global start
-extern k_main    ;  <-- The k_main function is defined in kernel.c
+extern k_main
 
 start:
-    mov esp, boot_stack_top
-    push eax ; <-|----pushes memory map from grub onto
-    push ebx ; <-|    the stack so the kernel can access it.
-    lgdt [boot_gdtr]
+    mov esp, stack_top
+    push eax
+    push ebx
+    lgdt [gdt_ptr]
+
     mov ax, 0x10
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
     mov ss, ax
-    jmp 0x08:flush_cs
-flush_cs:
-    call k_main  ; <-- Jumps to the kernel
 
-    hlt ; <-- Halt the CPU
+    jmp 0x08:flush_cs
+
+flush_cs:
+    call k_main
+
+.hang:
+    cli
+    hlt
+    jmp .hang
+
+section .data
+align 8
+
+gdt_start:
+    dq 0
+    dq 0x00CF9A000000FFFF
+    dq 0x00CF92000000FFFF
+gdt_end:
+
+gdt_ptr:
+    dw gdt_end - gdt_start - 1
+    dd gdt_start
+
+section .bss
+align 16
+
+stack_bottom:
+    resb 4096
+stack_top:

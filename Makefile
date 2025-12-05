@@ -1,108 +1,112 @@
+# === Paths ===
 BUILD_DIR := build
 SRC_DIR   := src
 
+# === Tools ===
 CC  := gcc
-CXX := g++ # C++
-LD  := ld
 ASM := nasm
+LD  := ld
 
-CFLAGS   := -m32 -O2 -lto -static -fPIC -fstack-protector -ffreestanding -Wall -Wextra -I$(SRC_DIR)
-CXXFLAGS := $(CFLAGS) -fno-exceptions -fno-rtti
+# === Flags ===
+# 32-bit freestanding kernel C flags
+CFLAGS   := -m32 -O2 -ffreestanding -fno-pic -Wall -Wextra -I$(SRC_DIR)
+CFLAGS   += -std=gnu11
+
+# 32-bit NASM objects
 ASMFLAGS := -f elf32
-LDFLAGS  := -m elf_i386 -T $(SRC_DIR)/linker.ld -nostdlib -flto
 
-# we should wildcard this #
-SRCS :=								\
-	drivers/debug.c					\
-	drivers/filesystem/fat.c		\
-	drivers/gdt.c					\
-	drivers/idt.c					\
-	drivers/interrupt.asm			\
-	drivers/key.c					\
-	drivers/pci.c					\
-	drivers/pic.c					\
-	drivers/pit.c					\
-	drivers/ports.c					\
-	drivers/ps2_keyboard.c			\
-	drivers/ps2_mouse.c				\
-	drivers/keymaps/ps2_keymap_fi.c	\
-	drivers/keymaps/ps2_keymap_us.c	\
-	drivers/ps2.c					\
-	drivers/sound.c					\
-	drivers/storage/ata.c			\
-	drivers/storage/device.c		\
-	drivers/storage/gpt.c			\
-	drivers/storage/partition.c		\
-	drivers/ssp.c					\
-	drivers/utils.c					\
-	drivers/vga.c					\
-	drivers/vbe.c					\
-	drivers/GPU/vmsvga/vmsvga.c		\
-	kernel/kernel.c					\
-	kernel/krnentry.asm				\
-	kernel/panic.c					\
-	memory/kmalloc.c				\
-	memory/pmm.c					\
-	shell/shell.c					\
-	shell/terminal.c				\
-	gui/desktop.cpp					\
-	shell/commands/command.c        \
-	shell/commands/guiload/guiload.c \
-	shell/commands/clear/clear.c    \
-	shell/commands/beep/beep.c      \
-	shell/commands/calc/calc.c      \
-	shell/commands/compdate/compdate.c \
-	shell/commands/echo/echo.c      \
-	shell/commands/pause/pause.c    \
-	shell/commands/pl/pl.c          \
-	shell/commands/chstat/chstat.c  \
-	shell/commands/cd/cd.c          \
-	shell/commands/cat/cat.c        \
-	shell/commands/ls/ls.c          \
-	shell/commands/whereami/whereami.c \
-	shell/commands/vbetest/vbetest.c \
-	shell/commands/recovery/recovery.c \
-	gui/bitmap/bitmap.c             \
-	gui/window/window.cpp           \
-	gui/window/manager/manager.cpp  \
-	gui/window/gui.cpp              \
-	recovery/recovery.cpp          	\
-	recovery/pong.cpp               \
-	#gui/widgets.c					\ # remove comment when its implemented.
-# gui/desktop.cpp (See line 46) was previously a C file
-# gui/window/window.cpp (See line 65) was previously a C file
-# gui/window/manager/manager.cpp (See line 66) was previously a C file
+# 32-bit linker, custom linker script, no standard libs
+LDFLAGS  := -m elf_i386 -T $(SRC_DIR)/linker.ld -nostdlib
 
+# === Sources ===
+SRCS := \
+    drivers/debug.c \
+    drivers/filesystem/fat.c \
+    drivers/gdt.c \
+    drivers/idt.c \
+    drivers/interrupt.asm \
+    drivers/key.c \
+    drivers/pci.c \
+    drivers/pic.c \
+    drivers/pit.c \
+    drivers/ports.c \
+    drivers/ps2_keyboard.c \
+    drivers/ps2_mouse.c \
+    drivers/keymaps/ps2_keymap_fi.c \
+    drivers/keymaps/ps2_keymap_us.c \
+    drivers/ps2.c \
+    drivers/sound.c \
+    drivers/storage/ata.c \
+    drivers/storage/device.c \
+    drivers/storage/gpt.c \
+    drivers/storage/partition.c \
+    drivers/ssp.c \
+    drivers/utils.c \
+    drivers/vga.c \
+    drivers/vbe.c \
+    drivers/GPU/vmsvga/vmsvga.c \
+    kernel/kernel.c \
+    kernel/krnentry.asm \
+    kernel/panic.c \
+    memory/kmalloc.c \
+    memory/pmm.c \
+    shell/shell.c \
+    shell/terminal.c \
+    shell/commands/command.c \
+    shell/commands/clear/clear.c \
+    shell/commands/beep/beep.c \
+    shell/commands/calc/calc.c \
+    shell/commands/compdate/compdate.c \
+    shell/commands/echo/echo.c \
+    shell/commands/pause/pause.c \
+    shell/commands/pl/pl.c \
+    shell/commands/chstat/chstat.c \
+    shell/commands/cd/cd.c \
+    shell/commands/cat/cat.c \
+    shell/commands/ls/ls.c \
+    shell/commands/whereami/whereami.c \
+    shell/commands/vbetest/vbetest.c
+
+# === Targets ===
+KERNEL_ELF := $(BUILD_DIR)/kernel.elf
+DISK_IMG   := image.hdd
+
+# Turn "foo/bar.c" and "foo/bar.asm" into "build/foo/bar.c.o" etc.
 OBJS := $(addprefix $(BUILD_DIR)/,$(addsuffix .o,$(SRCS)))
-DEPS := $(addprefix $(BUILD_DIR)/,$(addsuffix .d,$(filter-out %.asm,$(SRCS))))
 
-.PHONY: all kernel iso run clean
+.PHONY: all kernel img run clean
 
-all: kernel
+all: img
 
-kernel: $(OBJS)
-	$(LD) $(LDFLAGS) $(OBJS) -o $(BUILD_DIR)/ChoacuryOS.bin
-	grub-file --is-x86-multiboot $(BUILD_DIR)/ChoacuryOS.bin	
+kernel: $(KERNEL_ELF)
 
-img: kernel
+# Link the kernel
+$(KERNEL_ELF): $(OBJS)
+	$(LD) $(LDFLAGS) -o $(KERNEL_ELF) $(OBJS)
+
+# Build disk image (your script)
+img: $(KERNEL_ELF)
 	./create-disk.sh
 
+# Run under QEMU
 run: img
-	qemu-system-x86_64 -hda $(BUILD_DIR)/ChoacuryOS.img -serial stdio -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0
+	qemu-system-x86_64 -drive file=$(DISK_IMG),format=raw -serial stdio
 
+# Cleanup
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) image.hdd
 
--include $(DEPS)
+# === Compile rules ===
 
+# C -> .o
 $(BUILD_DIR)/%.c.o: $(SRC_DIR)/%.c Makefile
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
-$(BUILD_DIR)/%.cpp.o: $(SRC_DIR)/%.cpp Makefile
-	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
-
-$(BUILD_DIR)/%.asm.o: $(SRC_DIR)/%.asm
+# ASM -> .o
+$(BUILD_DIR)/%.asm.o: $(SRC_DIR)/%.asm Makefile
 	@mkdir -p $(@D)
 	$(ASM) $(ASMFLAGS) $< -o $@
+
+# Include auto-generated dependency files if they exist
+-include $(OBJS:.o=.d)

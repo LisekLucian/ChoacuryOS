@@ -1,7 +1,7 @@
 #include "../../terminal.h"
 #include "../../../drivers/vga.h"
 #include "../../../drivers/vbe.h"
-#include "../../../gui/desktop.h"
+#include "../../shell.h"
 #include "../command.h"
 
 // Put used_alias as -1 or 17 to set it as nothing btw

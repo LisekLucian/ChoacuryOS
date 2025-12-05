@@ -1,62 +1,46 @@
 #!/bin/bash
+set -euo pipefail
 
-MOUNT_DIR=build/mount
-DISK_PATH=build/ChoacuryOS.img
-DISK_SIZE=$((50 * 1024 * 1024))
+BUILD_DIR=build
+IMG=image.hdd
+SIZE_MB=64
 
-test -f $DISK_PATH
-SHOULD_BUILD=$?
+LIMINE_DIR=limine
+CONF=limine.conf
+KERNEL_ELF=${BUILD_DIR}/kernel.elf
+FONT_FILE=Unifont.psf
 
-if (($SHOULD_BUILD)); then
-	# create empty disk image
-	truncate -s 0 $DISK_PATH
-	dd if=/dev/zero of=$DISK_PATH bs=512 count=$(($DISK_SIZE / 512))
+export PATH="$PATH:/usr/sbin:/sbin"
 
-	# create partition table
-	parted --script $DISK_PATH	 \
-		mklabel gpt              \
-		mkpart boot 1M 2M        \
-		set 1 bios_grub on       \
-		mkpart root ext2 2M 100%
-fi
+[ -f "$KERNEL_ELF" ] || { echo "Missing $KERNEL_ELF"; exit 1; }
+[ -f "$CONF" ]       || { echo "Missing $CONF";       exit 1; }
+[ -f "$FONT_FILE" ]  || { echo "Missing $FONT_FILE";  exit 1; }
+[ -f "$LIMINE_DIR/limine-bios.sys" ] || { echo "Missing limine-bios.sys. Run: make -C limine"; exit 1; }
+[ -f "$LIMINE_DIR/BOOTX64.EFI" ]     || { echo "Missing UEFI files. Run: make -C limine"; exit 1; }
+[ -f "$LIMINE_DIR/BOOTIA32.EFI" ]    || { echo "Missing UEFI files. Run: make -C limine"; exit 1; }
 
-# create loop device
-LOOP_DEV=$(sudo losetup --show  -fP $DISK_PATH || exit 1)
-PARTITION1=${LOOP_DEV}p1
-PARTITION2=${LOOP_DEV}p2
-if [ ! -b $PARTITION1 ] || [ ! -b $PARTITION2 ]; then
-	echo "Failed to probe partitions for disk image." >&2
-	sudo losetup -d $LOOP_DEV
-	exit 1
-fi
+rm -f "$IMG"
+dd if=/dev/zero of="$IMG" bs=1M count=0 seek=$SIZE_MB
 
-if (($SHOULD_BUILD)); then
-	# create root filesystem
-	sudo mkfs.fat $PARTITION2
-fi
+sgdisk "$IMG" -n 1:2048:4095 -t 1:ef02 -c 1:"BIOS Boot"
+sgdisk "$IMG" -n 2:4096:0   -t 2:ef00 -c 2:"ESP"
 
-# mount root filesystem
-mkdir -p $MOUNT_DIR
-sudo mount $PARTITION2 "$MOUNT_DIR"
+"$LIMINE_DIR/limine" bios-install "$IMG"
 
-if (($SHOULD_BUILD)); then
-	# install grub
-	sudo grub-install						\
-		--no-floppy							\
-		--target=i386-pc					\
-		--modules="normal ext2 multiboot"	\
-		--boot-directory="$MOUNT_DIR/boot"	\
-		$LOOP_DEV
+FAT_OFFSET=$((4096 * 512))
 
-	sudo mkdir -p "$MOUNT_DIR/boot/grub"
-	sudo cp src/boot/grub.cfg $MOUNT_DIR/boot/grub/
-fi
+mformat -i "$IMG"@@$FAT_OFFSET -F
 
-# copy kernel to boot
-sudo cp build/ChoacuryOS.bin $MOUNT_DIR/boot/
-# copy fonts to /
-sudo cp Unifont.psf $MOUNT_DIR/
+mmd -i "$IMG"@@$FAT_OFFSET ::/EFI
+mmd -i "$IMG"@@$FAT_OFFSET ::/EFI/BOOT
+mmd -i "$IMG"@@$FAT_OFFSET ::/boot
+mmd -i "$IMG"@@$FAT_OFFSET ::/boot/limine
 
-# cleanup
-sudo umount "$MOUNT_DIR"
-sudo losetup -d $LOOP_DEV
+mcopy -i "$IMG"@@$FAT_OFFSET "$KERNEL_ELF" ::/boot/ChoacuryOS.elf
+mcopy -i "$IMG"@@$FAT_OFFSET "$CONF" ::/limine.conf
+mcopy -i "$IMG"@@$FAT_OFFSET "$LIMINE_DIR/limine-bios.sys" ::/
+mcopy -i "$IMG"@@$FAT_OFFSET "$LIMINE_DIR/BOOTX64.EFI" ::/EFI/BOOT
+mcopy -i "$IMG"@@$FAT_OFFSET "$LIMINE_DIR/BOOTIA32.EFI" ::/EFI/BOOT
+mcopy -i "$IMG"@@$FAT_OFFSET "$FONT_FILE" ::/
+
+echo "Done!"

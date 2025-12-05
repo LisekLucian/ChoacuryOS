@@ -9,7 +9,7 @@
 #include "../drivers/utils.h"
 #include "../drivers/vga.h"
 #include "../drivers/vbe.h"
-#include "../gui/desktop.h"
+//#include "../gui/desktop.h"
 #include "../kernel/panic.h"
 #include "../memory/kmalloc.h"
 #include "../memory/pmm.h"
@@ -88,14 +88,14 @@ void get_cpu_info(char* vendor, char* brand) {
     }
 }
 
-static void handle_return_code(int return_code, int argc, char** argv) {
+static void handle_return_code(int return_code, int argc, const char** argv) {
     // Look in commands/structure.md for more information //
 
     if(return_code == 2) {
         // 2 = Incorrect arguments return code
         // Display the help page for the specific commands (Flagged with the argument flag to be more specific)
         term_write("Invalid arguments.\n", TC_YELLO);
-        shell_commands_list[0].func(3, (char*[]){ "help", argv[0], "args" });
+        shell_commands_list[0].func(3, (const char*[]){ "help", argv[0], "args" });
     }
 }
 
@@ -239,7 +239,8 @@ PSF1_FONT* LoadFont() {
     }
 
     // Read the glyph data into the buffer
-    bytesRead = FAT_Read(font, 0, loadedFont->glyphBuffer, glyphBufferSize);
+    bytesRead = FAT_Read(font, sizeof(PSF1_HEADER),
+                     loadedFont->glyphBuffer, glyphBufferSize);
     if (bytesRead != glyphBufferSize) {
         kfree(loadedFont->glyphBuffer);
         kfree(loadedFont->psf1_Header);
@@ -279,13 +280,13 @@ void shell_start() {
 	
 	term_write("Creating test file...\n", TC_GREEN);
 	
-	char teststr = "Hello, World!";
+	const char *teststr = "Hello, World!";
 	FAT_file_t* file = FAT_OpenAbsolute(s_fat_fs, "/test.txt");
 	FAT_Write(file, 0, teststr, strlen(teststr));
 	FAT_Close(file);
-
     term_write("Loading font... ", TC_WHITE);
     font = LoadFont();
+    // ugh stop making the kernel panic...
     term_write("Done!\n", TC_GREEN);
 
     term_write(currentDir, TC_LIME);
